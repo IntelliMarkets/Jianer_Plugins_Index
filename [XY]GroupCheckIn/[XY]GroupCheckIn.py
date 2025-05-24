@@ -5,7 +5,6 @@ import random
 from datetime import datetime
 import httpx
 
-# 加载配置
 Configurator.cm = Configurator.ConfigManager(Configurator.Config(file="config.json").load_from_file())
 
 TRIGGHT_KEYWORD = "Any"
@@ -21,31 +20,67 @@ DEFAULT_CONFIG = {
         "max": 100
     },
     "数据存储路径": "./data/check_in/",
-    "总计数据文件": "total_check_in.json",
-    "每日数据文件": "daily_check_in.json",
-    "用户数据文件": "user_data.json"
+    "签到模式": "text",
+    "模板文件": "template.html"
 }
 
 class CheckInManager:
     def __init__(self):
-        self.config = self._load_or_create_config()
-        self.total_data = self._load_or_create_total_data()
-        self.daily_data = None
-        self.user_data = self._load_or_create_user_data()
-        self.last_date = None
+        """初始化签到管理器"""
+        try:
+            os.makedirs("./data/check_in/users/", exist_ok=True)
+            self.config = self._load_or_create_config()
+            
+            template_path = os.path.join(self.config["数据存储路径"], self.config["模板文件"])
+            if not os.path.exists(template_path):
+                self._create_default_template(template_path)
+            
+        except Exception as e:
+            print(f"[签到系统]初始化失败: {e}")
+            print(f"[签到系统]当前工作目录: {os.getcwd()}")
+            print(f"[签到系统]配置路径: {os.path.abspath('./data/check_in/')}")
+            raise e
     
     def _load_or_create_config(self):
-        """加载或创建配置文件"""
-        config_path = "./data/check_in/check_in_config.json"
-        if not os.path.exists(config_path):
-            os.makedirs(os.path.dirname(config_path), exist_ok=True)
-            with open(config_path, "w", encoding="utf-8") as f:
-                json.dump(DEFAULT_CONFIG, f, ensure_ascii=False, indent=2)
-        with open(config_path, "r", encoding="utf-8") as f:
+        config_path = os.path.join("./data/check_in/", "check_in_config.json")
+        try:
+            if not os.path.exists(config_path):
+                os.makedirs(os.path.dirname(config_path), exist_ok=True)
+                with open(config_path, "w", encoding="utf-8") as f:
+                    json.dump(DEFAULT_CONFIG, f, ensure_ascii=False, indent=2)
+                print(f"[签到系统]已创建默认配置文件: {config_path}")
+            with open(config_path, "r", encoding="utf-8") as f:
+                loaded_config = json.load(f)
+                for key, value in DEFAULT_CONFIG.items():
+                    if key not in loaded_config:
+                        loaded_config[key] = value
+                return loaded_config
+        except Exception as e:
+            print(f"[签到系统]配置文件操作失败: {e}")
+            return DEFAULT_CONFIG
+
+    def _get_user_data_path(self, user_id: str) -> str:
+        return os.path.join(self.config["数据存储路径"], "users", f"{user_id}.json")
+
+    def _load_user_data(self, user_id: str) -> dict:
+        path = self._get_user_data_path(user_id)
+        if not os.path.exists(path):
+            return {
+                "total_days": 0,
+                "好感度": 0,
+                "积分": 0,
+                "last_check": "",
+            }
+        with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
 
+    def _save_user_data(self, user_id: str, data: dict):
+        path = self._get_user_data_path(user_id)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+
     def _load_or_create_total_data(self):
-        """加载或创建总计签到数据"""
         os.makedirs(self.config["数据存储路径"], exist_ok=True)
         path = os.path.join(self.config["数据存储路径"], self.config["总计数据文件"])
         if not os.path.exists(path):
@@ -55,7 +90,6 @@ class CheckInManager:
             return json.load(f)
 
     def _load_or_create_daily_data(self):
-        """加载或创建每日签到数据，每天自动刷新"""
         today = datetime.now().strftime("%Y-%m-%d")
         
         if self.last_date != today or self.daily_data is None:
@@ -66,23 +100,12 @@ class CheckInManager:
             
         return self.daily_data
 
-    def _load_or_create_user_data(self):
-        """加载或创建用户数据"""
-        path = os.path.join(self.config["数据存储路径"], "user_data.json")
-        if not os.path.exists(path):
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump({}, f, ensure_ascii=False, indent=2)
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    
     def _save_total_data(self):
-        """保存总计签到数据"""
         path = os.path.join(self.config["数据存储路径"], self.config["总计数据文件"])
         with open(path, "w", encoding="utf-8") as f:
             json.dump(self.total_data, f, ensure_ascii=False, indent=2)
 
     def _save_daily_data(self):
-        """保存每日签到数据"""
         try:
             today = datetime.now().strftime("%Y-%m-%d")
             path = os.path.join(self.config["数据存储路径"], 
@@ -92,64 +115,289 @@ class CheckInManager:
         except Exception as e:
             print(f"[签到系统]保存每日数据出错: {e}")
 
-    def _save_user_data(self):
-        """保存用户数据"""
-        path = os.path.join(self.config["数据存储路径"], "user_data.json")
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(self.user_data, f, ensure_ascii=False, indent=2)
+    def _create_default_template(self, template_path):
+        try:
+            if not os.path.exists(os.path.dirname(template_path)):
+                os.makedirs(os.path.dirname(template_path), exist_ok=True)
+                
+            default_template = """<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            width: 400px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
+        .user-info {
+            flex-grow: 1;
+        }
+        .nickname {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .rank {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+        .rewards {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .reward-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+        }
+        .hitokoto {
+            font-style: italic;
+            margin-top: 20px;
+            padding: 10px;
+            border-left: 3px solid rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="header">
+            <img class="avatar" src="{{ avatar_url }}" alt="Avatar">
+            <div class="user-info">
+                <div class="nickname">{{ nickname }}</div>
+                <div class="rank">第 {{ rank }} 名签到</div>
+            </div>
+        </div>
+        <div class="rewards">
+            <div class="reward-item">
+                <span>今日好感度</span>
+                <span>+{{ favor }}</span>
+            </div>
+            <div class="reward-item">
+                <span>今日积分</span>
+                <span>{{ points }}</span>
+            </div>
+            <div class="reward-item">
+                <span>累计好感度</span>
+                <span>{{ total_favor }}</span>
+            </div>
+            <div class="reward-item">
+                <span>累计积分</span>
+                <span>{{ total_points }}</span>
+            </div>
+            <div class="reward-item">
+                <span>累计签到</span>
+                <span>{{ total_days }}天</span>
+            </div>
+        </div>
+        <div class="hitokoto">
+            {{ hitokoto }}
+        </div>
+    </div>
+</body>
+</html>"""
+            
+            with open(template_path, "w", encoding="utf-8") as f:
+                f.write(default_template)
+            print(f"[签到系统]已创建默认模板文件: {template_path}")
+            
+        except Exception as e:
+            print(f"[签到系统]创建默认模板失败: {e}")
+            raise e
+
+    def toggle_mode(self):
+        self.config["签到模式"] = "image" if self.config["签到模式"] == "text" else "text"
+        config_path = os.path.join(self.config["数据存储路径"], "check_in_config.json")
+        with open(config_path, "w", encoding="utf-8") as f:
+            json.dump(self.config, f, ensure_ascii=False, indent=2)
+        return self.config["签到模式"]
+
+    async def generate_image(self, user_id, nickname, rewards, hitokoto_text):
+        try:
+            from playwright.async_api import async_playwright
+            import jinja2
+
+            os.makedirs(self.config["数据存储路径"], exist_ok=True)
+
+            img_path = os.path.abspath(os.path.join(self.config["数据存储路径"], f"sign_{user_id}.png"))
+            try:
+                if os.path.exists(img_path):
+                    os.remove(img_path)
+                    print(f"[签到系统]已清理旧图片: {img_path}")
+            except Exception as e:
+                print(f"[签到系统]清理旧图片失败: {e}")
+            template_path = os.path.abspath(os.path.join(self.config["数据存储路径"], self.config["模板文件"]))
+            if not os.path.exists(template_path):
+                self._create_default_template(template_path)
+            
+            with open(template_path, "r", encoding="utf-8") as f:
+                template_content = f.read()
+
+            template = jinja2.Template(template_content)
+            html_content = template.render(
+                user_id=user_id,
+                nickname=nickname,
+                rank=rewards["rank"],
+                favor=rewards["favor"],
+                points=rewards["points"],
+                total_favor=rewards["total_favor"],
+                total_points=rewards["total_points"],
+                total_days=rewards["total_days"],
+                hitokoto=hitokoto_text,
+                avatar_url=f"http://q2.qlogo.cn/headimg_dl?dst_uin={user_id}&spec=640"
+            )
+
+            img_path = os.path.abspath(os.path.join(self.config["数据存储路径"], f"sign_{user_id}.png"))
+            
+            img_dir = os.path.dirname(img_path)
+            os.makedirs(img_dir, exist_ok=True)
+
+            async with async_playwright() as p:
+                browser = await p.chromium.launch()
+                page = await browser.new_page(viewport={"width": 800, "height": 600})
+                await page.set_content(html_content)
+                await page.screenshot(path=img_path, full_page=True)
+                await browser.close()
+
+            print(f"[签到系统]图片已生成: {img_path}")
+            
+            if not os.path.exists(img_path):
+                raise FileNotFoundError(f"图片文件未生成: {img_path}")
+                
+            file_size = os.path.getsize(img_path)
+            if file_size == 0:
+                raise ValueError("生成的图片文件大小为0")
+                
+            print(f"[签到系统]图片大小: {file_size} 字节")
+            return img_path
+
+        except Exception as e:
+            print(f"[签到系统]生成图片失败: {e}")
+            raise Exception(f"生成签到图片失败: {str(e)}")
+
+    def clean_old_images(self):
+        try:
+            image_dir = self.config["数据存储路径"]
+            current_time = datetime.now().timestamp()
+            
+            for filename in os.listdir(image_dir):
+                if filename.startswith("sign_") and filename.endswith(".png"):
+                    file_path = os.path.join(image_dir, filename)
+                    file_time = os.path.getmtime(file_path)
+                    if current_time - file_time > 3600:
+                        try:
+                            os.remove(file_path)
+                            print(f"[签到系统]已清理过期图片: {filename}")
+                        except Exception as e:
+                            print(f"[签到系统]清理过期图片失败 {filename}: {e}")
+        except Exception as e:
+            print(f"[签到系统]清理过期图片时出错: {e}")
 
     def check_in(self, user_id: str) -> dict:
-        """处理用户签到"""
-        self.daily_data = self._load_or_create_daily_data()
+        user_id = str(user_id)
+        today = datetime.now().strftime("%Y-%m-%d")
         
-        if user_id in self.daily_data["users"]:
+        user_data = self._load_user_data(user_id)
+        
+        if user_data.get("last_check") == today:
             return {"success": False, "message": "今天已经签到过了哦~"}
-
-        self.daily_data["count"] += 1
-        self.daily_data["users"].append(user_id)
-        self._save_daily_data()
-
-        if user_id not in self.total_data:
-            self.total_data[user_id] = {"total_days": 0}
-        if user_id not in self.user_data:
-            self.user_data[user_id] = {
-                "好感度": 0,
-                "积分": 0
-            }
-        
+            
         favor = random.randint(self.config["好感度"]["min"], self.config["好感度"]["max"])
         points = random.randint(self.config["积分"]["min"], self.config["积分"]["max"])
         
-        self.total_data[user_id]["total_days"] += 1
-        self.user_data[user_id]["好感度"] += favor
-        self.user_data[user_id]["积分"] += points
+        user_data["total_days"] += 1
+        user_data["好感度"] += favor
+        user_data["积分"] += points
+        user_data["last_check"] = today
         
-        self._save_total_data()
-        self._save_user_data()
-
-        rewards = {
-            "rank": self.daily_data["count"],
-            "favor": favor,
-            "points": points,
-            "total_days": self.total_data[user_id]["total_days"],
-            "total_favor": self.user_data[user_id]["好感度"],
-            "total_points": self.user_data[user_id]["积分"]
+        self._save_user_data(user_id, user_data)
+        
+        return {
+            "success": True,
+            "rewards": {
+                "rank": self._get_daily_rank(),  # 实现下面的方法
+                "favor": favor,
+                "points": points,
+                "total_days": user_data["total_days"],
+                "total_favor": user_data["好感度"],
+                "total_points": user_data["积分"]
+            }
         }
 
-        return {"success": True, "rewards": rewards}
+    def _get_daily_rank(self) -> int:
+        today = datetime.now().strftime("%Y-%m-%d")
+        rank = 1
+        
+        users_dir = os.path.join(self.config["数据存储路径"], "users")
+        for filename in os.listdir(users_dir):
+            if filename.endswith('.json'):
+                with open(os.path.join(users_dir, filename), 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    if data.get("last_check") == today:
+                        rank += 1
+        
+        return rank
 
 check_in_manager = CheckInManager()
+
+async def check_permission(event):
+    user_id = str(event.user_id)
+    return (user_id in Configurator.cm.get_cfg().others["ROOT_User"] or 
+            user_id in open("./Super_User.ini", "r").read().splitlines() or 
+            user_id in open("./Manage_User.ini", "r").read().splitlines())
 
 async def on_message(event, actions, Manager, Segments):
     if not hasattr(event, 'message'):
         return False
         
-    message_content = ""
-    if isinstance(event.message, list):
-        message_content = str(event.message[0])
-    else:
-        message_content = str(event.message)
-        
+    if random.random() < 0.01:
+        check_in_manager.clean_old_images()
+    
+    message_content = str(event.message).strip()
+    reminder = Configurator.cm.get_cfg().others['reminder']
+    
+    if message_content in [f"{reminder}切换签到发送模式"]:
+        if not await check_permission(event):
+            await actions.send(
+                group_id=event.group_id,
+                message=Manager.Message(Segments.Text("你没有权限执行此操作"))
+            )
+            return True
+            
+        new_mode = check_in_manager.toggle_mode()
+        await actions.send(
+            group_id=event.group_id,
+            message=Manager.Message(Segments.Text(f"已切换为{new_mode}模式签到"))
+        )
+        return True
+    
     if message_content != "签到":
         return False
     
@@ -162,21 +410,56 @@ async def on_message(event, actions, Manager, Segments):
         if not result["success"]:
             await actions.send(
                 group_id=event.group_id,
-                message=Manager.Message(
+                message=Manager.Message([
                     Segments.At(event.user_id),
                     Segments.Text(result["message"])
-                )
+                ])
             )
             return True
 
-        hitokoto_response = httpx.get("https://international.v1.hitokoto.cn/")
         try:
-            hitokoto_text = f"{hitokoto_response.json()['hitokoto']} —— {hitokoto_response.json()['from_who']}, {hitokoto_response.json()['from']}"
-        except:
-            hitokoto_text = "今天也要元气满满哦~"
+            async with httpx.AsyncClient() as client:
+                hitokoto_response = await client.get("https://international.v1.hitokoto.cn/", timeout=5.0)
+                hitokoto_data = hitokoto_response.json()
+                hitokoto_text = f"{hitokoto_data['hitokoto']} —— {hitokoto_data.get('from_who', '未知')}, {hitokoto_data.get('from', '未知')}"
+        except Exception as e:
+            print(f"[签到系统]获取一言失败: {e}")
+            hitokoto_text = "一言获取失败..."
 
         rewards = result["rewards"]
-        message = f'''
+        
+        if check_in_manager.config["签到模式"] == "image":
+            try:
+                img_path = await check_in_manager.generate_image(
+                    event.user_id, 
+                    user_nickname, 
+                    rewards, 
+                    hitokoto_text
+                )
+                
+                print(f"[签到系统]准备发送图片: {img_path}")
+                
+                await actions.send(
+                    group_id=event.group_id,
+                    message=Manager.Message([
+                        Segments.At(event.user_id),
+                        Segments.Image(f"file:///{img_path}")
+                    ])
+                )
+                
+                try:
+                    if os.path.exists(img_path):
+                        os.remove(img_path)
+                        print(f"[签到系统]已清理临时文件: {img_path}")
+                except Exception as e:
+                    print(f"[签到系统]清理文件失败: {str(e)}")
+                    
+            except Exception as e:
+                print(f"[签到系统]发送图片失败: {str(e)}")
+                check_in_manager.config["签到模式"] = "text"
+        
+        if check_in_manager.config["签到模式"] == "text":
+            message = f'''
 签到成功，你是第{rewards["rank"]}名签到的小伙伴
 好感度：+{rewards["favor"]}
 奖励积分：{rewards["points"]}
@@ -185,24 +468,21 @@ async def on_message(event, actions, Manager, Segments):
 累计签到：{rewards["total_days"]}天
 ——————————
 {hitokoto_text}'''
-
-        await actions.send(
-            group_id=event.group_id,
-            message=Manager.Message(
-                Segments.Image(f"http://q2.qlogo.cn/headimg_dl?dst_uin={event.user_id}&spec=640"),
-                Segments.Text(f"昵称："),
-                Segments.At(event.user_id),
-                Segments.Text(message)
+            await actions.send(
+                group_id=event.group_id,
+                message=Manager.Message([
+                    Segments.Image(f"http://q2.qlogo.cn/headimg_dl?dst_uin={event.user_id}&spec=640"),
+                    Segments.At(event.user_id),
+                    Segments.Text(message)
+                ])
             )
-        )
+            
         return True
         
     except Exception as e:
         await actions.send(
             group_id=event.group_id,
-            message=Manager.Message(
-                Segments.Text(f"签到出错了: {e}")
-            )
+            message=Manager.Message(Segments.Text(f"签到出错了: {e}"))
         )
         return True
 
