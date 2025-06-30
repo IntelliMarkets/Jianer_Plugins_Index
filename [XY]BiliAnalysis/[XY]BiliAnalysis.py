@@ -47,21 +47,17 @@ class BilibiliDelayManager:
         """检查群是否可以解析视频"""
         current_time = time.time()
         
-        # 优先使用群设置，如果没有则使用全局设置
         delay = self.delay_settings["groups"].get(
             group_id, 
             self.delay_settings["global"]
         )
-        
-        # 只使用群ID作为key，不再使用URL
+
         key = group_id
         last_time = self.last_analysis.get(key, 0)
         
-        # 检查是否在冷却中
         if current_time - last_time < delay:
             return False
             
-        # 更新群最后解析时间
         self.last_analysis[key] = current_time
         return True
 
@@ -91,7 +87,6 @@ def check_permission(user_id: str) -> bool:
                 
         return False
     except Exception:
-        # 如果读取文件出错，只检查ROOT权限
         return user_id in Configurator.cm.get_cfg().others.get("ROOT_User", [])
 
 delay_manager = BilibiliDelayManager()
@@ -101,7 +96,6 @@ async def process_delay_command(message: str, event, actions, Manager, Segments)
     reminder = Configurator.cm.get_cfg().others["reminder"]
     user_id = str(event.user_id)
     
-    # 检查权限
     if not check_permission(user_id):
         return "只有管理员才能设置解析延迟"
     
@@ -110,7 +104,6 @@ async def process_delay_command(message: str, event, actions, Manager, Segments)
             seconds = int(message[len(f"{reminder}设置解析全局延迟 "):])
             if seconds < 0:
                 return "延迟时间不能为负数"
-            # 设置全局延迟
             delay_manager.delay_settings["global"] = seconds
             delay_manager._save_delay_settings()
             return f"已设置全局解析延迟为 {seconds} 秒"
@@ -175,10 +168,6 @@ async def on_message(event, actions, Manager, Segments):
         return False
 
     if not delay_manager.can_analysis(msg, str(event.group_id)):
-        await actions.send(
-            group_id=event.group_id,
-            message=Manager.Message(Segments.Text("解析太频繁了，请稍后再试~"))
-        )
         return True
         
     try:

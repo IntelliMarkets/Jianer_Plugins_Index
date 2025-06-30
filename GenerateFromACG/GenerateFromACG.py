@@ -1,3 +1,4 @@
+import requests
 from Hyper import Configurator
 Configurator.cm = Configurator.ConfigManager(Configurator.Config(file="config.json").load_from_file())
 
@@ -7,7 +8,7 @@ TRIGGHT_KEYWORD = "生图 ACG "
 HELP_MESSAGE = f"{reminder}生图 ACG (任意类型，必填) —> {bot_name}制作精美二次元壁纸"
 
 async def on_message(event, actions, Manager, Segments, order, time, cooldowns, 
-                     Super_User, Manage_User, ROOT_User, bot_name, requests):
+                     Super_User, Manage_User, ROOT_User, bot_name):
     
     global reminder
     start_index = order.find("生图 ACG ") 
@@ -69,15 +70,20 @@ async def on_message(event, actions, Manager, Segments, order, time, cooldowns,
                         'num': "1",
                         }
 
-                response = requests.get(api, params=parameters)
-                print(parameters)
-                outputurl = response.json()
-                output = outputurl["pic"][0]
-                print(output)
+                try:
+                    response = requests.get(api, params=parameters)
+                    print(parameters)
+                    outputurl = response.json()
+                    output = outputurl["pic"][0]
+                    print(output)
 
-                image_id = await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Image(output), Segments.Text(f"{result}生成 结束！✧*。٩(>ω<*)و✧*。")))
-                await actions.del_message(selfID.data.message_id)
-                cooldowns[user_id] = current_time
+                    image_id = await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Image(output), Segments.Text(f"{result}生成 结束！✧*。٩(>ω<*)و✧*。")))
+                    await actions.del_message(selfID.data.message_id)
+                    cooldowns[user_id] = current_time
+                except Exception as e:
+                    await actions.del_message(selfID.data.message_id)
+                    await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Text(f'''因为 {type(e)} 
+{bot_name}不能生成图片了，请稍候在尝试吧 o(TヘTo)''')))
                 
         return True
 

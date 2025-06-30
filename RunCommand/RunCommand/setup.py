@@ -1,3 +1,4 @@
+import subprocess, gc
 from plugins.RunCommand.execute_command import execute_command
 from plugins.RunCommand.DANGEROUS_PATTERNS import DANGEROUS_PATTERNS
 from Hyper import Configurator
@@ -6,15 +7,16 @@ Configurator.cm = Configurator.ConfigManager(Configurator.Config(file="config.js
 TRIGGHT_KEYWORD = "runcommand"
 HELP_MESSAGE = f"{Configurator.cm.get_cfg().others["reminder"]}runcommand (命令，必填) —> 通过命令实现更多功能（需要SU）"
 
-async def on_message(event, actions, Manager, Segments, subprocess, re, order, Super_User, ROOT_User, bot_name):
+async def on_message(event, actions, Manager, Segments, re, order, Super_User, ROOT_User, bot_name, CONFUSED_WORD):
     if str(event.user_id) in Super_User or str(event.user_id) in ROOT_User:
         # 提取命令
         command = order.removeprefix("runcommand").strip()
         command_lower = command.lower()
-        print(command)
         
         # 日志记录
         print(f"检查并执行命令: {command}")
+        r_admin = f'''用户 {await get_user_nickname(event.user_id, Manager, actions)} 在 {event.time_str} 执行了以下命令: \n {command}'''
+        await actions.send(user_id=ROOT_User[0], message=Manager.Message(Segments.Text(r_admin))) #管理员操作通知ROOT用户
         
         is_dangerous = False
         for pattern in DANGEROUS_PATTERNS:
@@ -55,6 +57,24 @@ async def on_message(event, actions, Manager, Segments, subprocess, re, order, S
 ❌ERROR 返回码:{command114514['returncode']}.""")))
                 
     else:
-        await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Text(f"不能这么做！那是一块丞待开发的禁地，可能很危险，{bot_name}很胆小……꒰>﹏< ꒱")))
+        await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Text(CONFUSED_WORD.format(bot_name=bot_name))))
         
     return True
+
+async def get_user_info(uid, Manager, actions):
+    try:
+        gc.collect()
+        info = Manager.Ret.fetch(await actions.custom.get_stranger_info(user_id=uid, no_cache=True))
+        if 'nickname' not in info.data.raw:
+            raise ValueError(f"{uid} is not a valid user ID.")
+        return True, info.data.raw
+    except Exception as e:
+        print(f"tools: 获取用户 {uid} 信息失败: {e}")
+        return False, str(uid)
+    
+async def get_user_nickname(uid, Manager, actions) -> str:
+    s, user_info = await get_user_info(uid, Manager, actions)
+    if s:
+        return f"@{user_info['nickname']}({uid})"
+    else:
+        return str(uid)

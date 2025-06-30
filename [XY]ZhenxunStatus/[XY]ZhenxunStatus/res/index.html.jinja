@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+    {{ css_content }}
+    </style>
+    {% for css in config.ps_zhenxun_additional_css -%}
+    <link rel="stylesheet" href="{{ css }}" />
+    {%- endfor %}
+  </head>
+
+  <body>
+    <div class="wrapper">
+      <img class="top-image" src="http://xun.eynet.top/wp-content/uploads/2025/06/1750514056-top.jpg" />
+      <img class="abs-image" src="http://xun.eynet.top/wp-content/uploads/2025/06/1750514063-bk.png" />
+      <div class="main">
+        <div class="bot-text">
+          <div class="title">
+            <div class="title-n">
+              <img class="title-a" src="{{ bot_avatar_path }}" />
+            </div>
+            <span>{{ d.current_bot.nick }}</span>
+          </div>
+          <div class="network">
+            {% for it in d.network_connection -%}
+            <div class="network-item">
+              <span>{{ it.name }}</span>
+              <span
+                class="network-status {% if it.error %}down{% else %}up{% endif %}"
+              ></span>
+            </div>
+            {%- endfor %}
+          </div>
+        </div>
+        <div class="data-status">
+          <div class="data-status-item">
+            <div class="process">
+              <div class="process-bar" style="width: {{ d.cpu_percent }}%"></div>
+            </div>
+            <div class="data-status-item-text">
+              <div>CPU</div>
+              <div>
+                {{ d.cpu_percent }}% - {{ d.cpu_freq | format_cpu_freq }}
+                [{{ d.cpu_count }} core{% if d.cpu_count > 1 %}s{% endif %}]
+              </div>
+            </div>
+          </div>
+          <div class="data-status-item">
+            <div class="process">
+              <div
+                class="process-bar"
+                style="width: {{ d.memory_stat.percent }}%"
+              ></div>
+            </div>
+            <div class="data-status-item-text">
+              <div>RAM</div>
+              <div>
+                {{ d.memory_stat.used | auto_convert_unit }}
+                / {{ d.memory_stat.total | auto_convert_unit }}
+              </div>
+            </div>
+          </div>
+          <div class="data-status-item">
+            <div class="process">
+              <div class="process-bar" style="width: {{ d.swap_stat.percent }}%"></div>
+            </div>
+            <div class="data-status-item-text">
+              <div>SWAP</div>
+              <div>
+                {{ d.swap_stat.used | auto_convert_unit }}
+                / {{ d.swap_stat.total | auto_convert_unit }}
+              </div>
+            </div>
+          </div>
+          {% for it in d.disk_usage -%}
+          <div class="data-status-item">
+            <div class="process">
+              <div
+                class="process-bar"
+                style="width: {% if it.exception %}0{% else %}{{ it.percent  }}{% endif %}%"
+              ></div>
+            </div>
+            <div class="data-status-item-text">
+              <div>DISK {{ it.name }}</div>
+              <div>
+                {{ it.used | auto_convert_unit }} / {{ it.total | auto_convert_unit }}
+              </div>
+            </div>
+          </div>
+          {%- endfor %}
+        </div>
+        <div class="line"></div>
+        <div class="status-text">
+          <div class="status-text-title">CPU</div>
+          <div class="status-text-content">{{ d.cpu_brand }}</div>
+
+          <div class="status-text-title">SYSTEM</div>
+          <div class="status-text-content">{{ d.system_name }}</div>
+
+          <div class="status-text-title">VERSION</div>
+          <div class="status-text-content">
+            {% if d.zhenxun_version %}{{ d.zhenxun_version }}
+            {%- else %}{{ d.python_version }} × Xiaoyi_QQ {{ d.nonebot_version }}
+            {%- endif %}
+          </div>
+
+        </div>
+      </div>
+
+      <div class="tip">
+        PicStatus {{ d.ps_version }} × Template ZhenXun {{ d.template_version }}
+        | {{ d.time }}
+      </div>
+    </div>
+  </body>
+
+  {% for script in config.ps_zhenxun_additional_script -%}
+  <script src="{{ script }}"></script>
+  {%- endfor %}
+</html>

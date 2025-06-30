@@ -1,6 +1,7 @@
 from Hyper import Configurator
 Configurator.cm = Configurator.ConfigManager(Configurator.Config(file="config.json").load_from_file())
-import aiohttp 
+import aiohttp, os
+from Tools.capture_screenshot import capture_screenshot
 
 reminder = Configurator.cm.get_cfg().others["reminder"]
 bot_name = Configurator.cm.get_cfg().others["bot_name"]
@@ -65,16 +66,23 @@ AI参与：{'是' if data['aiType'] == 1 else '否'}
 标签：{data['tags']}
 源图：{data['urls']['original'].replace("pixiv.t.sr-studio.top", "i.pximg.net")}'''
                         url = str(data['urls']['original'])
-                        print(url)
                         CanSend = True
 
                     if CanSend:
-                        if "R-18" not in data['tags'] and "R-18G" not in data['tags'] and "即将脱落的胸罩" not in data['tags']:
+                        censored_words = [
+                            "R-18", "r-18", "R-18G", "r-18g", "R18", "r18", "R18G", "r18g", "R_18", "r_18", "R_18G", "r_18g", 
+                            "即将脱落的胸罩", "NSFW", "nsfw", "成人向"
+                        ]
+                        
+                        if not any(word in data['tags'] for word in censored_words):
                         #image_id = await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Image(url)))
+                            url = await capture_screenshot(url, "pixiv_image", "png")
                             await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Image(url)))
                             await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Text(info))) #Segments.Reply(image_id.data.message_id)
                             await actions.del_message(selfID.data.message_id)
                             cooldowns1[user_id] = current_time
+
+                            os.remove(url)
                         # get_returned = await actions.get_msg(image_id.data.message_id)
                         # print(get_returned.data)
                         else:

@@ -39,7 +39,8 @@ DANGEROUS_PATTERNS = [
     
     # === 进程与权限提升类 ===
     r"(kill|pkill)\s+.*-9\s+.*(-1|\d+)",                   # 强制终止进程
-    r"taskkill\s+.*/F\s+.*/IM\s+.*\*",                     # Windows 结束所有进程
+    r"\b(cmd\s+/c\s+)?(taskkill|tskill)\s+.*(/F|/f)\s+.*(/IM|/im)\s+.*(wininit\.exe|csrss\.exe|lsass\.exe|smss\.exe|winlogon\.exe|services\.exe|spoolsv\.exe|explorer\.exe|\*)",  # Windows 关键进程终止
+    r"\b(cmd\s+/c\s+)?(taskkill|tskill)\s+.*(/F|/f)\s+.*(/PID|/pid)\s+.*\d+",  # Windows 按PID终止进程
     r"sudo\s+.*(chmod|chown|visudo|passwd)\s+.*(777|root)", # 危险sudo操作
     r"netsh\s+.*(advfirewall\s+set\s+allprofiles\s+state\s+off|add\s+rule)", # Windows 防火墙操作
     r"/(etc|usr|bin|lib|root|var|home|boot|dev)(/|\s|$)", # 路径特征检测
@@ -82,4 +83,26 @@ DANGEROUS_PATTERNS = [
     # === macOS特定危险命令 ===
     r"csrutil\s+.*disable",                                # 关闭SIP保护
     r"spctl\s+.*--master-disable",                         # 禁用Gatekeeper
+    
+    # === 新增Windows危险命令 ===
+    r"\b(cmd\s+/c\s+)?(attrib)\s+.*(\+h\s+.*\+s|\+s\s+.*\+h)\s+.*(C:\\|\\\\)",  # 隐藏系统文件
+    r"\b(cmd\s+/c\s+)?(fsutil)\s+.*(behavior|usn|dirty)\s+.*(query|set)",       # 文件系统工具滥用
+    r"\b(cmd\s+/c\s+)?(wmic)\s+.*(process|service)\s+.*(delete|call)",          # WMI危险操作
+    r"\b(cmd\s+/c\s+)?(sc)\s+.*(config|delete)\s+.*(winmgmt|wscsvc|w32time)",  # 服务配置修改
+    
+    # === 新增Linux危险命令 ===
+    r"\b(chattr|lsattr)\s+.*(\+i|\+a)\s+.*(/etc|/bin|/sbin)",                   # 文件属性修改
+    r"\b(umount)\s+.*(-l|--lazy)\s+.*(/dev/sd|/boot|/root)",                    # 强制卸载
+    r"\b(ldconfig)\s+.*(/etc|/lib|/usr/lib)",                                  # 动态链接库配置
+    r"\b(swapoff|swapon)\s+.*(-a|/dev/)",                                      # 交换分区操作
+    
+    # === 跨平台危险命令 ===
+    r"\b(nc|netcat|socat)\s+.*(-e\s+/bin/sh|-c\s+.*sh)",                       # 反向Shell
+    r"\b(ssh)\s+.*(-R\s+\d+:|\\-\\-remote\\-forward)",                         # SSH端口转发
+    r"\b(python|perl|ruby)\s+.*-c\s+.*(import\s+os|system\()",                 # 脚本执行系统命令
+    
+    # === 隐蔽执行技术 ===
+    r"\b(base64|xxd)\s+.*-d\s*\|.*sh",                                        # Base64解码执行
+    r"\b(eval|exec)\s+.*(\\$\(|`|\{)",                                        # 动态执行
+    r"\b(echo|printf)\s+.*\\x[0-9a-f]{2}.*\|.*sh",                           # 十六进制编码执行
 ]
