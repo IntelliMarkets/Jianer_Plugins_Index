@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全屏背景和右下角文字</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: sans-serif;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background-color: black; /* 根据你的图片风格选择颜色 */
+        }
+
+        .background-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: scale-down; /* 关键属性：scale-down */
+            object-position: center; /* 初始值为 center，JavaScript 会根据实际情况调整 */
+            z-index: -1;
+        }
+
+        /* 字体样式 */
+        @font-face {
+            font-family: 'name';
+            src: url('{name114}') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'name1';
+            src: url('{name514}') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        .text-overlay {
+            position: absolute;
+            bottom: 20px;
+            right: 30px;
+            text-align: right;
+            z-index: 1;
+        }
+
+        .japanese-text {
+            font-family: 'name';
+            font-size: 4em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+            line-height: 1.2;
+        }
+
+        .english-text {
+            font-family: 'name1';
+            font-size: 1.8em;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+            line-height: 1.2;
+        }
+
+        .background-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.2;
+            z-index: 0;
+        }
+
+        /* 媒体查询，针对竖屏方向进行优化 */
+        @media (orientation: portrait) {
+            .background-image {
+                object-position: center top; /* 竖屏时，将图片顶部居中显示 */
+            }
+        }
+
+    </style>
+</head>
+<body>
+<img src="{image114514}" alt="背景图片" class="background-image">
+<div class="background-pattern"></div>
+<div class="text-overlay">
+    <div class="japanese-text">{akiname} ----《{aki2}》</div>
+    <div class="english-text">Powered By Akinator-Python</div>
+</div>
+
+<script>
+    function adjustImagePosition() {
+        const img = document.querySelector('.background-image');
+        if (!img) return;
+
+        const imgWidth = img.naturalWidth;
+        const imgHeight = img.naturalHeight;
+        const containerWidth = window.innerWidth;
+        const containerHeight = window.innerHeight;
+
+        let objectPositionX = 'center';
+        let objectPositionY = 'center';
+        let imgWidthStyle = '100%';
+        let imgHeightStyle = '100%';
+
+        if (imgWidth > containerWidth || imgHeight > containerHeight) {
+            // 图片大于容器，需要缩小
+            const widthRatio = containerWidth / imgWidth;
+            const heightRatio = containerHeight / imgHeight;
+
+            if (widthRatio < heightRatio) {
+                // 宽度受限，高度可能溢出
+                imgWidthStyle = '100%';
+                imgHeightStyle = 'auto';
+                objectPositionY = 'center'; // 垂直居中
+            } else {
+                // 高度受限，宽度可能溢出
+                imgWidthStyle = 'auto';
+                imgHeightStyle = '100%';
+                objectPositionX = 'center'; // 水平居中
+            }
+        } else {
+            // 图片小于容器，保持原始大小并居中
+            imgWidthStyle = imgWidth + 'px';
+            imgHeightStyle = imgHeight + 'px';
+            objectPositionX = 'center';
+            objectPositionY = 'center';
+        }
+
+        img.style.objectPosition = `${objectPositionX} ${objectPositionY}`;
+        img.style.width = imgWidthStyle;
+        img.style.height = imgHeightStyle;
+    }
+
+    window.addEventListener('resize', adjustImagePosition);
+    window.addEventListener('load', adjustImagePosition);
+
+    const img = document.querySelector('.background-image');
+    if (img) {
+        img.addEventListener('error', () => {
+            console.error('Failed to load image. Re-adjusting position.');
+            adjustImagePosition();
+        });
+    }
+</script>
+
+</body>
+</html>
