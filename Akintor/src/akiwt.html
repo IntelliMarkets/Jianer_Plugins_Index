@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question {wtnumber}</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #e0f2f7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 0;
+            box-shadow: none;
+            padding: 20px;
+            width: 100%;
+            height: 100vh;
+            display: flex;       
+            flex-direction: row;   
+            align-items: center;    
+            justify-content: space-between; 
+            text-align: left;     
+        }
+
+        img {
+            max-width: 40%;        
+            max-height: 80vh;   
+            object-fit: contain;      
+            margin-right: 20px;     
+            flex-shrink: 0;         
+        }
+
+        .question-and-options {
+            font-family: 'name';
+            flex-grow: 1;       
+            display: flex;
+            flex-direction: column; 
+            justify-content: center; 
+            width: 50%;      
+            text-align: left;     
+        }
+
+        .question {
+            font-family: 'name';
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+
+        .options {
+            font-family: 'name';
+            width: 100%;
+        }
+
+        .options button {
+            font-family: 'name';
+            background-color: #b2ebf2;
+            border: none;
+            border-radius: 5px;
+            color: #006064;
+            padding: 15px 20px;
+            margin: 10px 0;
+            width: 100%;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: background-color 0.3s ease;
+            text-align: center;  
+        }
+
+        .options button:hover {
+            background-color: #80deea;
+        }
+
+        .previous {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: #424242;
+            text-align: center;
+        }
+
+        .previous button {
+            background-color: transparent;
+            border: none;
+            color: #424242;
+            padding: 0;
+            cursor: pointer;
+            font-size: inherit;
+        }
+
+        .number {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #2196f3;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        @font-face {
+            font-family: 'name';
+            src: url('{name114}') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'name1'; 
+            src: url('{name514}') format('opentype'); 
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+                flex-direction: column;
+                align-items: center; 
+                text-align: center; 
+            }
+
+            img {
+                max-width: 80%; 
+                max-height: none;
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+
+            .question-and-options {
+                width: 100%; 
+                text-align: center; 
+            }
+
+            .options button {
+                text-align: center; 
+            }
+
+            .number {
+                top: 10px;
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="{akiimage114514}" alt="Genie">
+        <div class="question-and-options">
+            <div class="number">{wtnumber}</div>
+            <div class="question">{question114514}</div>
+            <div class="options">
+                <button>1. 是 (y)</button>
+                <button>2. 否 (n)</button>
+                <button>3. 不知道 (idk)</button>
+                <button>4. 或许是 (p)</button>
+                <button>5. 或许不是 (pn)</button>
+                <button>上一题(b)</button>
+                <button>退出(q)</button>
+            </div>
+        </div>
+    </div>
+    </div>
+</body>
+</html>
