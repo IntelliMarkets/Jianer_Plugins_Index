@@ -5,7 +5,23 @@ Configurator.cm = Configurator.ConfigManager(Configurator.Config(file="config.js
 reminder = Configurator.cm.get_cfg().others["reminder"]
 bot_name = Configurator.cm.get_cfg().others["bot_name"]
 TRIGGHT_KEYWORD = "生图 ACG "
-HELP_MESSAGE = f"{reminder}生图 ACG (任意类型，必填) —> {bot_name}制作精美二次元壁纸"
+HELP_MESSAGE = f"{reminder}生图 ACG (任意类型，必填) —> {bot_name}制作精美二次元壁纸(发送{reminder}生图 ACG 帮助可查看帮助菜单)"
+
+async def send_image(api,event, actions, Manager, Segments, order, time, cooldowns, 
+                     Super_User, Manage_User, ROOT_User, bot_name):
+    try:
+        
+        print(f"使用 LoliAPI: {api}")
+        image_id = await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Image(api), Segments.Text(f"{result}生成 结束！✧*。٩(>ω<*)و✧*。")))
+        await actions.del_message(selfID.data.message_id)
+        cooldowns[user_id] = current_time
+    except Exception as e:
+        await actions.del_message(selfID.data.message_id)
+        await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Text(f'''因为 {type(e)} 
+{bot_name}不能生成图片了，请稍候在尝试吧 o(TヘTo)''')))
+                    
+    return True
+
 
 async def on_message(event, actions, Manager, Segments, order, time, cooldowns, 
                      Super_User, Manage_User, ROOT_User, bot_name):
@@ -21,69 +37,54 @@ async def on_message(event, actions, Manager, Segments, order, time, cooldowns,
             if not (str(event.user_id) in Super_User or str(event.user_id) in ROOT_User or str(event.user_id) in Manage_User):
                 time_remaining = 18 - (current_time - cooldowns[user_id])
                 await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Text(f"18秒个人cd，请等待 {time_remaining:.1f} 秒后重试")))
-                return
+                return True
         else:
             selfID = await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Text(f"{bot_name}正在制作超级好看的二次元壁纸 ヾ(≧▽≦*)o")))
 
+            # 完全使用LoliAPI
             if "随机" in result:
-                api = "https://api.iw233.cn/api.php?sort=random"
-                print("0")
-            elif "精选" in result:
-                api = "https://api.iw233.cn/api.php?sort=top"
-                print("1")
-            elif "白毛" in result:
-                api = "https://api.iw233.cn/api.php?sort=yin"
-                print("2")
-            elif "星空" in result:
-                api = "https://api.iw233.cn/api.php?sort=xing"
-                print("3")
-            elif "兽娘" in result:
-                api = "https://api.iw233.cn/api.php?sort=cat"
-                print("4")
+                api = "https://www.loliapi.com/acg/"
+                send_image(api)
             elif "电脑壁纸" in result:
-                api = "https://api.iw233.cn/api.php?sort=pc"
-                print("5")
+                api = "https://www.loliapi.com/acg/pc/"
+                send_image(api)
             elif "手机壁纸" in result:
-                api = "https://api.iw233.cn/api.php?sort=mp"
-                print("6")
+                api = "https://www.loliapi.com/acg/pe/"
+                send_image(api)
             elif "头像" in result:
                 api = "https://www.loliapi.com/acg/pp/"
-                await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Image(api), Segments.Text(f"{result}生成 结束！✧*。٩(>ω<*)و✧*。")))
-                await actions.del_message(selfID.data.message_id)
-                cooldowns[user_id] = current_time
-                print("7")
-                return
-
-            if api == "":
+                send_image(api)
+            elif "背景" in result:
+                api = "https://www.loliapi.com/bg/"
+                send_image(api)
+            elif "帮助" in result:
                 h = f'''{bot_name}可生成精美 ACG 壁纸噢~ヾ(≧∪≦*)ノ〃
-1. 按内容生成，发送
-{reminder}生图 ACG 随机/精选/白毛/星空/兽娘/头像
-2. 按尺寸生成，发送
-{reminder}生图 ACG 电脑壁纸/手机壁纸
-举个🍐子：{reminder}生图 ACG 白毛 -> {bot_name}生成白毛二次元壁纸
+{reminder}生图 ACG 随机/自适应 -> 根据设备自动适配
+{reminder}生图 ACG 电脑壁纸/PC/电脑 -> 电脑端高清壁纸 
+{reminder}生图 ACG 手机壁纸/移动端/手机 -> 移动端适配壁纸 
+{reminder}生图 ACG 头像 -> 适合做头像的图片 
+{reminder}生图 ACG 背景/壁纸 -> 随机二次元背景
+
+举个🍐子：{reminder}生图 ACG 随机 -> {bot_name}生成自适应二次元壁纸
 快来试试吧Ｏ(≧▽≦)Ｏ '''
                 await actions.del_message(selfID.data.message_id)
                 await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Text(h)))
+                return True
             else:
-                parameters = {
-                        "type": "json",
-                        'num': "1",
-                        }
+                await actions.del_message(selfID.data.message_id)
+                await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Text("指定的类型不存在")))
+                h = f'''{bot_name}可生成精美 ACG 壁纸噢~ヾ(≧∪≦*)ノ〃
+{reminder}生图 ACG 随机/自适应 -> 根据设备自动适配
+{reminder}生图 ACG 电脑壁纸/PC/电脑 -> 电脑端高清壁纸 
+{reminder}生图 ACG 手机壁纸/移动端/手机 -> 移动端适配壁纸 
+{reminder}生图 ACG 头像 -> 适合做头像的图片 
+{reminder}生图 ACG 背景/壁纸 -> 随机二次元背景
 
-                try:
-                    response = requests.get(api, params=parameters)
-                    print(parameters)
-                    outputurl = response.json()
-                    output = outputurl["pic"][0]
-                    print(output)
+举个🍐子：{reminder}生图 ACG 随机 -> {bot_name}生成自适应二次元壁纸
+快来试试吧Ｏ(≧▽≦)Ｏ '''
+                await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Text(h)))
+                return True
 
-                    image_id = await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Image(output), Segments.Text(f"{result}生成 结束！✧*。٩(>ω<*)و✧*。")))
-                    await actions.del_message(selfID.data.message_id)
-                    cooldowns[user_id] = current_time
-                except Exception as e:
-                    await actions.del_message(selfID.data.message_id)
-                    await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Text(f'''因为 {type(e)} 
-{bot_name}不能生成图片了，请稍候在尝试吧 o(TヘTo)''')))
-                
-        return True
 
+
+    
