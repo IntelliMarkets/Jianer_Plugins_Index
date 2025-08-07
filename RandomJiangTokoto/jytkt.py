@@ -3,7 +3,7 @@ from Hyper import Configurator
 Configurator.cm = Configurator.ConfigManager(Configurator.Config(file="config.json").load_from_file())
 
 TRIGGHT_KEYWORD = "姜言"
-HELP_MESSAGE = f"{Configurator.cm.get_cfg().others['reminder']}jytkt —> 听取姜老板一言"
+HELP_MESSAGE = f"{Configurator.cm.get_cfg().others['reminder']}姜言 —> 听取姜老板一言"
 
 async def on_message(event, actions, Manager, Segments, bot_name):
     try:
