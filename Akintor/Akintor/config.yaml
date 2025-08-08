@@ -1,4 +1,0 @@
-proxyurl: null
-# 代理服务器地址，如果为null则不使用代理 注意:最后一定要加/
-lang: cn
-# 语言配置，例如 cn (中文), jp (日文), en (英语) 为null默认jp
