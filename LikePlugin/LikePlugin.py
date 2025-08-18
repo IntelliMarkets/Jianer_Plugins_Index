@@ -3,6 +3,7 @@ import asyncio
 import time
 import json
 import os
+import random
 from datetime import datetime
 from Hyper import Manager, Segments
 
@@ -98,10 +99,13 @@ async def on_message(event, actions, Manager, Segments):
             return True
         
         try:
-            # 一次性点赞10次
-            await actions.custom.send_like(user_id=user_id, times=50)
+            # 分5次点赞，每次10赞，共50赞，随机间隔0.1~0.5秒
+            for i in range(5):
+                await actions.custom.send_like(user_id=user_id, times=10)
+                delay = random.uniform(0.1, 0.5)  # 随机延迟0.1~0.5秒
+                await asyncio.sleep(delay)
             
-            like_manager.record_like(user_id, 10)
+            like_manager.record_like(user_id, 10)  # 记录为10次
             
             remaining = like_manager.get_remaining_likes(user_id)
             success_msg = f"成功给你的名片点赞10次啦！{bot_name}最喜欢你啦！记得回赞哦！(◍•ᴗ•◍)❤"
@@ -134,7 +138,7 @@ async def on_message(event, actions, Manager, Segments):
         
         return True
     
-    # 保留带前缀的"点赞信息"查询功能
+    # 保留
     elif msg == f"{reminder}点赞信息":
         user_id = event.user_id
         info = like_manager.get_like_info(user_id)
@@ -148,6 +152,6 @@ async def on_message(event, actions, Manager, Segments):
     
     return False
 
-print("[QQ名片点赞插件]作者:deepseek 已成功加载")
+print("[QQ名片点赞插件] 已成功加载")
 print("触发词: 赞我")
 print("功能: 每次给用户QQ名片点赞10次，每日上限10次")
