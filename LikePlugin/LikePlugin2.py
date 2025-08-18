@@ -2,6 +2,7 @@ from Hyper import Configurator
 import asyncio
 import json
 import os
+import random  
 from datetime import datetime
 from Hyper import Manager, Segments
 
@@ -9,7 +10,7 @@ from Hyper import Manager, Segments
 Configurator.cm = Configurator.ConfigManager(Configurator.Config(file="config.json").load_from_file())
 
 # 插件信息
-HELP_MESSAGE = "发送【超我】可以给你的QQ名片点赞10次"
+HELP_MESSAGE = "发送【超我】或【超湿我】可以给你的QQ名片点赞10次"
 TRIGGHT_KEYWORD = "Any"  
 
 class SuperManager:
@@ -83,8 +84,8 @@ async def on_message(event, actions, Manager, Segments):
     reminder = Configurator.cm.get_cfg().others["reminder"]
     bot_name = Configurator.cm.get_cfg().others["bot_name"]
     
-    # 精确匹配"超我"触发词
-    if msg == "超我":
+    # 精确匹配"超我"或"超湿我"触发词
+    if msg in ["超我", "超死我", "超湿我"]:
         user_id = event.user_id
         
         if not super_manager.can_super_today(user_id):
@@ -96,8 +97,13 @@ async def on_message(event, actions, Manager, Segments):
             return True
         
         try:
-            await actions.custom.send_like(user_id=user_id, times=50)
-            super_manager.record_super(user_id, 10)
+            # 分5次点赞，每次10赞，共50赞，随机间隔0.1~0.5秒
+            for i in range(5):
+                await actions.custom.send_like(user_id=user_id, times=10)
+                delay = random.uniform(0.1, 0.5)  # 随机延迟0.1~0.5秒
+                await asyncio.sleep(delay)
+            
+            super_manager.record_super(user_id, 10)  # 记录为10次
             
             remaining = super_manager.get_remaining_supers(user_id)
             success_msg = "已经为你超了10下哦，记得回捏~ (◍•ᴗ•◍)❤"
@@ -144,5 +150,5 @@ async def on_message(event, actions, Manager, Segments):
     return False
 
 print("[QQ名片超插件] 加载成功")
-print("触发词: 超我")
+print("触发词: 超我, 超湿我")
 print("功能: 每次给用户QQ名片点赞10次，每日上限10次")
