@@ -7,12 +7,10 @@ import random
 from datetime import datetime
 from Hyper import Manager, Segments
 
-# 加载配置
 Configurator.cm = Configurator.ConfigManager(Configurator.Config(file="config.json").load_from_file())
 
-# 插件信息
 TRIGGHT_KEYWORD = "Any"  
-HELP_MESSAGE = f"发送【赞我】可以给你的QQ名片点赞10次"
+HELP_MESSAGE = f"发送【超我】【赞我】可以给你的QQ名片点赞10次"
 
 class LikeManager:
     def __init__(self):
@@ -32,7 +30,6 @@ class LikeManager:
             json.dump(self.user_data, f, ensure_ascii=False, indent=2)
     
     def can_like_today(self, user_id):
-        """检查今天是否可以点赞（每日上限10次）"""
         user_id = str(user_id)
         today = datetime.now().strftime("%Y-%m-%d")
         
@@ -86,7 +83,6 @@ async def on_message(event, actions, Manager, Segments):
     reminder = Configurator.cm.get_cfg().others["reminder"]
     bot_name = Configurator.cm.get_cfg().others["bot_name"]
     
-    # 精确匹配"赞我"触发词（无需前缀）
     if msg == "赞我":
         user_id = event.user_id
         
@@ -99,13 +95,12 @@ async def on_message(event, actions, Manager, Segments):
             return True
         
         try:
-            # 分5次点赞，每次10赞，共50赞，随机间隔0.1~0.5秒
-            for i in range(5):
-                await actions.custom.send_like(user_id=user_id, times=10)
-                delay = random.uniform(0.1, 0.5)  # 随机延迟0.1~0.5秒
+            for i in range(3):
+                await actions.custom.send_like(user_id=user_id, times=20)
+                delay = random.uniform(0.1, 0.5)
                 await asyncio.sleep(delay)
             
-            like_manager.record_like(user_id, 10)  # 记录为10次
+            like_manager.record_like(user_id, 10)
             
             remaining = like_manager.get_remaining_likes(user_id)
             success_msg = f"成功给你的名片点赞10次啦！{bot_name}最喜欢你啦！记得回赞哦！(◍•ᴗ•◍)❤"
@@ -138,7 +133,55 @@ async def on_message(event, actions, Manager, Segments):
         
         return True
     
-    # 保留
+    elif msg in ["超我", "超湿我"]:
+        user_id = event.user_id
+        
+        if not like_manager.can_like_today(user_id):
+            await actions.send(
+                group_id=event.group_id if hasattr(event, "group_id") else None,
+                user_id=user_id if not hasattr(event, "group_id") else None,
+                message=Manager.Message(Segments.Text("今天已经超你10次啦，明天再来吧~ (๑•́ ₃ •̀๑)"))
+            )
+            return True
+        
+        try:
+            for i in range(3):
+                await actions.custom.send_like(user_id=user_id, times=20)
+                delay = random.uniform(0.1, 0.5)
+                await asyncio.sleep(delay)
+            
+            like_manager.record_like(user_id, 10)
+            
+            remaining = like_manager.get_remaining_likes(user_id)
+            success_msg = "已经为你超了10下哦，记得回捏~ (◍•ᴗ•◍)❤"
+            if remaining > 0:
+                success_msg += f"\n今日还可超{remaining}次"
+            else:
+                success_msg += "\n今日超已达上限啦~"
+            
+            await actions.send(
+                group_id=event.group_id if hasattr(event, "group_id") else None,
+                user_id=user_id if not hasattr(event, "group_id") else None,
+                message=Manager.Message(Segments.Text(success_msg))
+            )
+            
+            if hasattr(event, "group_id"):
+                await actions.send(
+                    group_id=event.group_id,
+                    message=Manager.Message(
+                        Segments.At(user_id),
+                        Segments.Text(f"你的名片已被{bot_name}超了10下！(≧▽≦)/")
+                    )
+                )
+        except Exception as e:
+            print(f"超操作失败: {e}")
+            await actions.send(
+                group_id=event.group_id if hasattr(event, "group_id") else None,
+                user_id=user_id if not hasattr(event, "group_id") else None,
+                message=Manager.Message(Segments.Text(f"超操作失败啦...可能是机器人没有权限(｡•́︿•̀｡) 错误: {str(e)}"))
+            )
+        return True
+    
     elif msg == f"{reminder}点赞信息":
         user_id = event.user_id
         info = like_manager.get_like_info(user_id)
@@ -150,8 +193,20 @@ async def on_message(event, actions, Manager, Segments):
         )
         return True
     
+    elif msg == f"{reminder}超信息":
+        user_id = event.user_id
+        info = like_manager.get_like_info(user_id)
+        info = info.replace("点赞", "超").replace("赞", "超")
+        
+        await actions.send(
+            group_id=event.group_id if hasattr(event, "group_id") else None,
+            user_id=user_id if not hasattr(event, "group_id") else None,
+            message=Manager.Message(Segments.Text(info))
+        )
+        return True
+    
     return False
 
-print("[QQ名片点赞插件]作者:deepseek 已成功加载")
-print("触发词: 赞我")
-print("功能: 每次给用户QQ名片点赞10次，每日上限10次")
+print("[QQ名片点赞] 加载成功")
+print("触发词: 赞我, 超我, 超湿我")
+print("功能: 每次给用户QQ名片点赞10次")
