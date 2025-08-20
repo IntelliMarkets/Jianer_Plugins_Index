@@ -95,8 +95,8 @@ async def on_message(event, actions, Manager, Segments):
             return True
         
         try:
-            for i in range(3):
-                await actions.custom.send_like(user_id=user_id, times=20)
+            for i in range(55):
+                await actions.custom.send_like(user_id=user_id, times=1)
                 delay = random.uniform(0.1, 0.5)
                 await asyncio.sleep(delay)
             
@@ -145,8 +145,8 @@ async def on_message(event, actions, Manager, Segments):
             return True
         
         try:
-            for i in range(3):
-                await actions.custom.send_like(user_id=user_id, times=20)
+            for i in range(55):
+                await actions.custom.send_like(user_id=user_id, times=1)
                 delay = random.uniform(0.1, 0.5)
                 await asyncio.sleep(delay)
             
