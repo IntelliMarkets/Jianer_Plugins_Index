@@ -6,12 +6,12 @@ import io
 import re
 from PIL import Image
 
-TRIGGHT_KEYWORD = "run"
-HELP_MESSAGE = "/run [QQ号/@用户] [背景颜色(可选)] —> 生成摸摸头GIF，默认背景为透明"
+TRIGGHT_KEYWORD = "rua"
+HELP_MESSAGE = "/rua [QQ号/@用户] [背景颜色(可选)] —> 生成摸摸头GIF，默认背景为透明"
 
 async def on_message(event, actions, Manager, Segments, order, reminder, bot_name):
     # 检查是否包含触发关键词
-    if not (order.startswith("run") or order.startswith("/run")):
+    if not (order.startswith("rua") or order.startswith("/run")):
         return False
     
     # 解析参数
@@ -19,7 +19,7 @@ async def on_message(event, actions, Manager, Segments, order, reminder, bot_nam
     if len(parts) < 2:
         await actions.send(
             group_id=event.group_id,
-            message=Manager.Message(Segments.Text(f"格式错误！请使用：{reminder}run [QQ号/@用户] [背景颜色(可选)]"))
+            message=Manager.Message(Segments.Text(f"格式错误！请使用：{reminder}rua [QQ号/@用户] [背景颜色(可选)]"))
         )
         return True
     
