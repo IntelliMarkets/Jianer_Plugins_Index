@@ -1,0 +1,1 @@
+{reminder}mcs IP/域名以查询mc服务器信息
