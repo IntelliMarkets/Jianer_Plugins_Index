@@ -83,7 +83,7 @@ async def _fetch_kuaishou_data_async(api_url, retries=3):
                 raise e
     return None
 
-async def on_message(event, actions, Manager, Segments, Events):
+async def on_message(event, actions, Manager, Segments, Events, bot_name):
     if not hasattr(event, "message"):
         return False
         
@@ -274,7 +274,7 @@ async def on_message(event, actions, Manager, Segments, Events):
     chat_nodes.append(
         Segments.CustomNode(
             str(event.self_id),
-            "星辰旅人",
+            "bot_name",
             Manager.Message([
                 Segments.Image(info.get("avatar", "")),
                 Segments.Text(f"作者昵称：{info.get('author', '未知')}"),
@@ -287,7 +287,7 @@ async def on_message(event, actions, Manager, Segments, Events):
     chat_nodes.append(
         Segments.CustomNode(
             str(event.self_id),
-            "星辰旅人",
+            "bot_name",
             Manager.Message([
                 Segments.Image(info.get("cover", "")),
                 Segments.Text("【视频信息】"),
@@ -301,7 +301,7 @@ async def on_message(event, actions, Manager, Segments, Events):
         chat_nodes.append(
             Segments.CustomNode(
                 str(event.self_id),
-                "星辰旅人",
+                "bot_name",
                 Manager.Message([
                     Segments.Text("【背景音乐】"),
                     Segments.Text(f"音乐名称：{music_info.get('musicName', '无信息')}"),
