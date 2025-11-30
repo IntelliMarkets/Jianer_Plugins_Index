@@ -1,0 +1,9 @@
+{
+  "单身证": "https://api.yuafeng.cn/API/zt/ztf.php?qq={qq1}",
+  "摸狗": "https://api.yuafeng.cn/API/zt/ztd.php?qq={qq1}",
+  "举牌": "https://api.yuafeng.cn/API/zt/zta.php?qq={qq1}",
+  "抱枕头哭": "https://api.yuafeng.cn/API/zt/ztb.php?qq={qq1}",
+  "牵你手": "https://api.yuafeng.cn/API/zt/ztg.php?qq1={qq1}&qq2={qq2}",
+  "好羡慕": "https://api.yuafeng.cn/API/zt/zth.php?qq={qq1}",
+  "爬": "https://api.yuafeng.cn/API/zt/ztk.php?qq={qq1}"
+}
