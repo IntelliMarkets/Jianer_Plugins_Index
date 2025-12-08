@@ -9,9 +9,15 @@
 
 [Main Repo](https://github.com/SRInternet-Studio/Jianer_QQ_bot/)
 
+![Alt](https://repobeats.axiom.co/api/embed/5a7b65a2df07732a101273a56c0f40add32dca69.svg "Repobeats analytics image")
+
 </div>
 
-## 如何上传
+## ⚡ 如何编写
+
+请参阅文档 [简儿 NEXT 3：Create a New Plugin](https://github.com/SRInternet-Studio/Jianer_QQ_bot/wiki/Create-a-New-Plugin)
+
+## ✨ 如何上传
 > [!Important]
 > 
 > **重要：请务必按照以下规范流程上传您的插件，不规范的上传可能会导致无法正常在设置向导中下载或更新你的插件，还有可能导致插件市场损坏。**
@@ -108,10 +114,15 @@ Jianer_Plugins_Index/
 > 
 > 作为一名合格的开发者，你不应该开发具有成人色情、暴力、血腥等违反 GitHub 社区规定 的插件上传至仓库，也不应改动别人的插件文件夹。**一经审查发现有以上行为，将会被删除插件，并在一段时间内撤销其推送权限。**
 
-## 如何下载、更新和卸载
+## ⬇ 如何下载、更新和卸载
 1.	在设置向导中打开插件中心
 2.	点击想要下载或更新的插件
 3.	在弹出的窗口中，点击下载、更新或卸载
 
-## 关于
+## ⚖ 许可证
+如在对应的插件文件夹下无 LICENCE/LICENSE 文件，且开发者未在对应的插件文件夹下的 README.md 中特殊说明，本插件中心的全部插件均适用于 MIT 协议，协议署名默认为 Pull Requests 的发起者或推送者的 Github 昵称。
+
+**[SR思锐 团队](https://github.com/SRInternet-Studio/) 不保留第三方开发者的插件的所有权利。**
+
+## ❕ 关于
 本文基于插件规范版本 NEXT 3 编写。插件可能基于 [HypeR](https://github.com/HarcicYang/HypeR_Bot) 框架和 OneBot 11 框架。
