@@ -48,7 +48,7 @@ def execute_command(command, subprocess, timeout=30, encoding='utf-8', errors='i
     if isinstance(command, str):
         if not use_shell:
             try:
-                # Linux下尝试智能分割命令字符串
+                # Linux下尝试分割命令字符串
                 import shlex
                 command = shlex.split(command)
             except Exception:
@@ -61,16 +61,12 @@ def execute_command(command, subprocess, timeout=30, encoding='utf-8', errors='i
                 'time', 'ver', 'vol', 'set', 'start', 'pause', 'exit'
             }
             
-            # 获取命令的第一个单词(不区分大小写)
             first_word = command.strip().split()[0].lower()
-            
-            # 如果是内置命令，添加cmd /c前缀
-            if first_word in windows_builtins:
+            if first_word in windows_builtins: # 内置加cmd /c前缀
                 command = f'cmd /c {command}'
             
-            # Windows Server特定处理
+            # Windows Server
             if is_server:
-                # 确保系统目录在PATH中
                 import os
                 system_root = os.environ.get('SystemRoot', r'C:\Windows')
                 system32 = os.path.join(system_root, 'System32')

@@ -1,4 +1,5 @@
 import json, aiohttp, uuid
+import traceback
 from datetime import datetime
 
 from Hyper import Configurator
@@ -107,6 +108,8 @@ async def on_message(event, actions: Listener.Actions, Manager, Segments,
 
     if uid == 0:
         uid_str = order[order.find(f"{TRIGGHT_KEYWORD} ") + len(f"{TRIGGHT_KEYWORD} "):].strip()
+        if not uid_str:
+            uid_str = event.user_id
         try:
             uid = int(uid_str)
         except (ValueError, TypeError):
@@ -134,9 +137,17 @@ async def on_message(event, actions: Listener.Actions, Manager, Segments,
         print(f"get_user {uid} failed: no user_info returned")
         await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Text(r)))
     elif isinstance(user_info, dict) and user_info.get("user_id"):
-        avatar, r = parse_user_info(user_info, ADMINS, SUPERS, ROOT_User)
+        framework = await actions.get_version_info()
+        framework = framework.data.raw
+        if "NapCat" in framework.get("app_name"):
+            avatar, r = parser_user_info_napcat(user_info, ADMINS, SUPERS, ROOT_User)
+        else:
+            avatar, r = parse_user_info(user_info, ADMINS, SUPERS, ROOT_User)
         print(f"get_user {uid} successfully")
-        await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Image(avatar), Segments.Text(r)))
+        if avatar:
+            await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Image(avatar), Segments.Text(r)))
+        else:
+            await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Text(r)))
     else:
         r = f'''{bot_name} {bot_name_en} - {ONE_SLOGAN}
 ————————————————————
@@ -145,6 +156,50 @@ async def on_message(event, actions: Listener.Actions, Manager, Segments,
         await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Text(r)))
         
     return True
+
+def parser_user_info_napcat(user_dict, ADMINS, SUPERS, ROOT_User):
+    try:
+        avatar = user_dict.get('avatar', '')
+        register_time = user_dict.get('reg_time', '')
+        try:
+            dt = datetime.strptime(register_time, '%Y-%m-%dT%H:%M:%SZ')
+            register_time = dt.strftime('%Y.%m.%d %H:%M:%S')
+        except (ValueError, TypeError):
+            register_time = '未知时间'
+            
+        is_vip = user_dict.get('is_vip', False)
+        vip_level = user_dict.get('vip_level', 0)
+        is_year_vip = user_dict.get('is_years_vip', False)
+
+        status_msg = "(框架不支持)" # NapCat not support
+        if str(user_dict.get('user_id', '未知')) in ROOT_User:
+            status_user = "ROOT_User"
+        elif str(user_dict.get('user_id', '未知')) in SUPERS:
+            status_user = "Super_User"
+        elif str(user_dict.get('user_id', '未知')) in ADMINS:
+            status_user = "Manage_User"
+        else:
+            status_user = "普通用户"
+            
+        result = f"""昵称: {user_dict.get('nickname', '未知')}
+状态: {status_msg}
+QQ号: {user_dict.get('uin', '未知')}
+QID: {user_dict.get('qid', '未知')}
+性别: {'男' if user_dict.get('sex') == 'male' else '女'}
+年龄: {user_dict.get('age', '未知')}
+权限: {status_user}
+QQ等级: {user_dict.get('qqLevel', '未知')}
+个性签名: {user_dict.get('longNick', '暂无签名')}
+注册时间: {register_time}
+超级会员: {'是' if is_vip else '否'}
+会员等级: {vip_level}
+年费会员: {'是' if is_year_vip else '否'}"""
+
+        return (avatar, result)
+
+    except Exception as e:
+        print(f"解析失败: {traceback.format_exc()}")
+        return ("", "无法打开该用户的账户")
 
 def parse_user_info(user_dict, ADMINS, SUPERS, ROOT_User):
     try:
@@ -188,5 +243,5 @@ QQ等级: {user_dict.get('level', '未知')}
         return (avatar, result)
 
     except Exception as e:
-        print(f"解析失败: {e}")
+        print(f"解析失败: {traceback.format_exc()}")
         return ("", "无法打开该用户的账户")

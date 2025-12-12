@@ -6,7 +6,7 @@ Configurator.cm = Configurator.ConfigManager(
 )
 
 TRIGGHT_KEYWORD = "Any"
-HELP_MESSAGE = "发送『banme』给你禁言60~300秒"
+HELP_MESSAGE = "banme - 给你禁言60~300秒"
 
 async def on_message(event, actions, Events, Manager, Segments):
     if isinstance(event, Events.GroupMessageEvent):

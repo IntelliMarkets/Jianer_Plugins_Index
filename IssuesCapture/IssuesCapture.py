@@ -10,7 +10,7 @@ HELP_MESSAGE = f'''{Configurator.cm.get_cfg().others["reminder"]}issue (编号)/
        
 OWNER: str = "SRInternet-Studio"
 REPO: str = "Jianer_QQ_bot"
-TOKEN: str = ""
+TOKEN: str = os.environ.get('GITHUB_TOKEN') # 请手动配置，或从环境变量中获取 GITHUB_TOKEN
        
 async def on_message(event, actions, Manager, Segments, Events, reminder):
     global OWNER, REPO
@@ -22,11 +22,15 @@ async def on_message(event, actions, Manager, Segments, Events, reminder):
             
             selfID = await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Text(f"请等待，正在获取 issue 内容……")))
             image = ""
-            match msg[1]:
-                case "latest":
-                    image = await capture_full_page_screenshot(await get_latest_github_urls("issues?state=all&sort=created&direction=desc&"), "repo_content")
-                case _:
-                    image = await capture_full_page_screenshot(f"https://github.com/{OWNER}/{REPO}/issues/{msg[1]}", "repo_content")
+            try:
+                match msg[1]:
+                    case "latest":
+                        image = await capture_full_page_screenshot(await get_latest_github_urls("issues?state=all&sort=created&direction=desc&"), "repo_content")
+                    case _:
+                        image = await capture_full_page_screenshot(f"https://github.com/{OWNER}/{REPO}/issues/{msg[1]}", "repo_content")
+            except Exception as e:
+                print(f"capturing failed: {e}")
+                image = str(e)
                     
             await actions.del_message(selfID.data.message_id)
             if image and os.path.isfile(image):
@@ -38,7 +42,7 @@ async def on_message(event, actions, Manager, Segments, Events, reminder):
     2. 设定的 REPO 和 OWNER 有误
     3. 设定的仓库里没有任何 issue
     4. 网络问题导致无法连接至 Github
-    5. 内容请求次数过多，被 API 阻止''')))
+    5. 内容请求次数过多，被 API 阻止''' if not image else f"无法获取指定 issue 的内容，是因为 {image}")))
             return True
         
         elif f"{reminder}commit" in str(event.message):
@@ -48,12 +52,16 @@ async def on_message(event, actions, Manager, Segments, Events, reminder):
             
             selfID = await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Text(f"请等待，正在获取 commit 内容……")))
             image = ""
-            match msg[1]:
-                case "latest":
-                    image = await capture_full_page_screenshot(await get_latest_github_urls("commits?"), "repo_content")
-                case _:
-                    image = await capture_full_page_screenshot(f"https://github.com/{OWNER}/{REPO}/commit/{msg[1]}", "repo_content", max_height=6080)
-                    
+            try:
+                match msg[1]:
+                    case "latest":
+                        image = await capture_full_page_screenshot(await get_latest_github_urls("commits?"), "repo_content")
+                    case _:
+                        image = await capture_full_page_screenshot(f"https://github.com/{OWNER}/{REPO}/commit/{msg[1]}", "repo_content", max_height=6080)
+            except Exception as e:
+                print(f"capturing failed: {e}")
+                image = str(e)
+                 
             await actions.del_message(selfID.data.message_id)
             if image and os.path.isfile(image):
                 await actions.send(group_id=event.group_id, message=Manager.Message(Segments.Reply(event.message_id), Segments.Image(image)))
@@ -64,7 +72,7 @@ async def on_message(event, actions, Manager, Segments, Events, reminder):
     2. 设定的 REPO 和 OWNER 有误
     3. 设定的仓库里没有任何 commit
     4. 网络问题导致无法连接至 Github
-    5. 内容请求次数过多，被 API 阻止''')))
+    5. 内容请求次数过多，被 API 阻止''' if not image else f"无法获取指定 commit 的内容，是因为 {image}")))
             return True
         else:
             return False

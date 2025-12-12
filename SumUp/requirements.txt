@@ -1,0 +1,4 @@
+asyncio
+Hyper
+google-generativeai
+pickle-mixin

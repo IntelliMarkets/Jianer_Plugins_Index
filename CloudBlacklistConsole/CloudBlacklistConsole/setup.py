@@ -1,21 +1,24 @@
 import asyncio
 from typing import Tuple, Optional
-from Hyper import Configurator
+from Hyper import Configurator, Events
 import plugins.CloudBlacklistConsole.pathmagic # 保证寻找本地文件
 
-from run import main
+from run import main, stop
 import app.services.config_service as config_service
 Configurator.cm = Configurator.ConfigManager(Configurator.Config(file="config.json").load_from_file())
 
 TRIGGHT_KEYWORD = "Any"
-HELP_MESSAGE = f"{Configurator.cm.get_cfg().others["reminder"]}群云黑名单 —> 禁止加群黑名单管理"
+HELP_MESSAGE = f"{Configurator.cm.get_cfg().others['reminder']}群云黑名单 —> 禁止加群黑名单管理"
 
-async def on_message(event, actions, Manager, Segments, Events, reminder, ADMINS, CONFUSED_WORD, bot_name, bot_name_en):
+async def on_message(event, actions, Manager, Segments, Events: Events, reminder, ADMINS, CONFUSED_WORD, bot_name, bot_name_en):
     event.group_id = event.group_id if hasattr(event, "group_id") else ""      
     if isinstance(event, Events.HyperListenerStartNotify):
         _ = main()
         return False
-    
+    elif isinstance(event, Events.HyperListenerStopNotify):
+        print("[群云黑名单]插件将停止运行")
+        stop()
+        return False
     elif isinstance(event, Events.GroupAddInviteEvent):
         blacklist = config_service.load_config()
         if str(event.group_id) in blacklist and str(event.group_id) != "":

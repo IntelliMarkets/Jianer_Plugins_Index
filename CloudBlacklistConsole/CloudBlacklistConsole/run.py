@@ -58,9 +58,11 @@ def print_access_urls(port) -> str:
 
 def main() -> str:
     global PORT
+    # if check_port_in_use(PORT): os.popen(f"sudo kill -9 $(lsof -t -i :{PORT})")
     if not check_port_in_use(PORT):
         try:
             app.run(host='0.0.0.0', port=PORT)
+            print("[群云黑名单]插件已加载")
         except OSError as e:
             if "Address already in use" in str(e):
                 raise OSError(f'''\n💥 群云黑控制台 WebUI 启动失败：端口 {PORT} 被意外占用！
@@ -68,6 +70,10 @@ def main() -> str:
 请执行以下命令释放端口：sudo kill -9 $(lsof -t -i :{PORT})\n''')
     
     return print_access_urls(PORT)
+
+def stop() -> None:
+    print("[群云黑名单]插件将停止运行")
+    raise SystemExit
 
 if __name__ == '__main__':
     # 端口占用检测
