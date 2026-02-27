@@ -2,7 +2,7 @@ import asyncio
 import re
 from Hyper import Configurator, Events
 
-TRIGGHT_KEYWORD = "群代办"
+TRIGGHT_KEYWORD = "群待办"
 HELP_MESSAGE = f'''{Configurator.cm.get_cfg().others['reminder']}群待办 —> 快捷设置群待办'''
 
 #！！！机器人要有管理员权限才行，否则设置不了群待办！！！
