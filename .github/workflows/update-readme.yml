@@ -14,7 +14,9 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-
+        with:
+          ssh-key: ${{ secrets.BOT_SSH_KEY }}
+          
       - name: Count Plugin Folders and Update README
         run: |
           # 1. 统计顶层文件夹数量 (排除隐藏文件夹)
