@@ -1,0 +1,31 @@
+name: Update Plugin Count
+
+on:
+  push:
+    branches:
+      - main
+      
+permissions:
+  contents: write 
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Count Plugin Folders and Update README
+        run: |
+          # 1. 统计顶层文件夹数量 (排除隐藏文件夹)
+          count=$(find . -maxdepth 1 -mindepth 1 -type d ! -name ".*" | wc -l)
+          echo "当前插件总数: $count"
+          
+          # 2. 正则替换 Badge 中的数字：找到 "插件总数-" 和 "-green" 之间的任何数字 ([0-9]+) 并将其替换为最新的 $count 变量
+          sed -i -E "s|(插件总数-)[0-9]+(-green)|\1${count}\2|g" README.md
+
+      - name: Commit and Push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "docs: 自动更新插件总数徽标"
+          file_pattern: 'README.md'
