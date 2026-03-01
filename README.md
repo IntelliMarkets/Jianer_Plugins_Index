@@ -6,7 +6,7 @@
 
 <img src="https://img.shields.io/badge/Language-Python-coral?logo=python&logoColor=white" alt="Language">
 <img alt="GitLab Stars" src="https://img.shields.io/github/stars/IntelliMarkets/Jianer_Plugins_Index?label=Stars">
-<img src="https://img.shields.io/badge/插件总数-54-green?logo=stackblitz&logoColor=black&style=social" alt="Badge">
+<img src="https://img.shields.io/badge/插件总数-55-green?logo=stackblitz&logoColor=black&style=social" alt="Badge">
 
 这里是简儿QQ机器人的插件市场，为市场中的插件提供下载与更新功能。
 
