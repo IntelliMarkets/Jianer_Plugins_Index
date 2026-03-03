@@ -91,7 +91,7 @@
 
 > [!Important]
 > 
-> 请注意，在进行拉取请求的创建时，请确保您已经完成了您的插件的测试，并且详细描述您的插件的功能,如果**您在创建拉取请求时没有对于您的插件进行测试或者发生了任何因为没有仔细阅读Jianer_QQ_bot插件规范/Jianer_Plugin_Index插件上传教程导致的一切问题**，均由插件开发者（您）来承担
+> 请注意，在进行拉取请求的创建时，请确保您已经完成了您的插件的测试，并且详细描述您的插件的功能，如果**您在创建拉取请求时没有对于您的插件进行测试，或者发生了任何因为没有仔细阅读 [插件规范](https://jianer.sr-studio.cn/Create-a-New-Plugin.html) 或 [插件上传教程](#-如何上传) 导致的一切问题**，均由该插件的开发者（您）来承担
 
 9.  **等待审核**
     *   仓库维护者会审核你的 PR，如果一切符合规范，你的插件将被合并到主仓库中。
@@ -103,13 +103,13 @@ Jianer_Plugins_Index/
 ├── Plugin_A/
 │   ├── Plugin_A.py
 │   ├── requirements.txt
-│   └── README.md (可选)
+│   └── README.md
 └── Plugin_B/
     ├── Plugin_B/
     │   ├── setup.py
     │   └── ...
     ├── requirements.txt
-    └── README.md (可选)
+    └── README.md
 ```
 
 **关于 Git 命令的补充说明：**
@@ -136,8 +136,8 @@ Jianer_Plugins_Index/
 2. 点击 <img width="92" height="26" alt="image" src="https://github.com/user-attachments/assets/796c5fa1-f0a7-463c-9a2a-cd4787e4b55c" /> 按钮
 3. 解压你下载的压缩包中的全部文件到一个文件夹中
 4. 进入你要安装的那个插件的文件夹
-5. 将这个文件夹中除了 `requirements.txt` 和 `LICENCE` (或 `LICENSE`) 这两个文件之外的全部内容，完整地复制到 简儿QQ机器人 **根目录下**的 `plugins` 文件夹中
-6. 如果机器人正在运行，请 **重载插件** 或 **重启你的机器人**
+5. 将这个文件夹中除了 `requirements.txt` 和 `LICENCE` (或 `LICENSE`) 、`READMD.md` 这三个文件之外的全部内容，完整地复制到 简儿QQ机器人 **根目录下**的 `plugins` 文件夹中
+6. 如果 简儿QQ机器人 正在运行，请 **重载插件** 或 **重启你的机器人**
 
 ### 使用设置向导 (WebUI) 下载、管理插件
 1.	在设置向导 (WebUI) 中打开插件中心
