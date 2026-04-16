@@ -25,6 +25,17 @@ sign_status = {
     "retry_count": 0
 }
 
+# 全局保存 actions 和 Manager 引用
+_global_actions = None
+_global_Manager = None
+
+
+def init_globals(actions, Manager):
+    """初始化全局引用，供自动打卡使用"""
+    global _global_actions, _global_Manager
+    _global_actions = actions
+    _global_Manager = Manager
+
 
 async def do_sign_for_all_groups(actions, Manager, retry_only_failed=False):
     """对所有群执行打卡"""
@@ -67,6 +78,7 @@ async def do_sign_for_all_groups(actions, Manager, retry_only_failed=False):
                 await actions.custom.set_group_sign(group_id=int(group_id))
                 sign_status["success"] += 1
                 print(f"[自动打卡] ✅ [{i+1}/{len(groups)}] 群 {group_id}({group_name}) 打卡成功")
+                await asyncio.sleep(0.01)
             except Exception as e:
                 error_msg = str(e)
                 sign_status["failed"] += 1
@@ -88,9 +100,7 @@ async def do_sign_for_all_groups(actions, Manager, retry_only_failed=False):
 
 def auto_sign_worker():
     """自动打卡后台线程"""
-    global sign_status
-    
-    print("[自动打卡] 后台线程已启动，等待每天 00:00 执行...")
+    global sign_status, _global_actions, _global_Manager
     
     while True:
         now = datetime.datetime.now()
@@ -102,30 +112,33 @@ def auto_sign_worker():
         
         wait_seconds = (next_midnight - now).total_seconds()
         
-        # 每小时检查一次
         if wait_seconds > 3600:
             time.sleep(3600)
             continue
         
-        print(f"[自动打卡] 将在 {wait_seconds:.0f} 秒后 (00:00) 开始执行...")
         time.sleep(wait_seconds)
         
-        today_str = datetime.datetime.now().strftime("%Y-%m-%d")
-        print(f"[自动打卡] ========== {today_str} 开始自动打卡 ==========")
+        # 等待全局引用初始化
+        retry_wait = 0
+        while _global_actions is None or _global_Manager is None:
+            if retry_wait >= 60:
+                break
+            time.sleep(5)
+            retry_wait += 5
+        
+        if _global_actions is None or _global_Manager is None:
+            continue
         
         # 在新的事件循环中执行异步任务
         async def run_sign():
-            from Hyper import Listener, Manager
-            temp_actions = Listener.Actions()
+            global sign_status
             
-            # 重置状态
             sign_status["retry_count"] = 0
             
             # 第一次尝试
-            all_success = await do_sign_for_all_groups(temp_actions, Manager, retry_only_failed=False)
+            all_success = await do_sign_for_all_groups(_global_actions, _global_Manager, retry_only_failed=False)
             
             if all_success:
-                print(f"[自动打卡] 🎉 所有群打卡成功！")
                 return
             
             # 失败则重试
@@ -134,30 +147,18 @@ def auto_sign_worker():
                 
                 now = datetime.datetime.now()
                 if now.hour > 0 or now.minute > 30:
-                    print(f"[自动打卡] ⏰ 已超过 00:30，停止重试")
                     break
                 
-                # 等待到下一分钟
-                time.sleep(60)
-                
-                current_time = datetime.datetime.now()
-                print(f"[自动打卡] 🔄 第 {sign_status['retry_count']}/30 次重试 ({current_time.strftime('%H:%M')})")
-                
-                all_success = await do_sign_for_all_groups(temp_actions, Manager, retry_only_failed=True)
-                
-                if all_success:
-                    print(f"[自动打卡] 🎉 重试成功！")
-                    break
-            
-            print(f"[自动打卡] 最终结果: 成功 {sign_status['success']}/{sign_status['total']}，失败 {sign_status['failed']}")
+                await asyncio.sleep(60)
+                await do_sign_for_all_groups(_global_actions, _global_Manager, retry_only_failed=True)
         
         try:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             loop.run_until_complete(run_sign())
             loop.close()
-        except Exception as e:
-            print(f"[自动打卡] 执行出错: {traceback.format_exc()}")
+        except Exception:
+            pass
 
 
 def start_auto_sign():
@@ -169,11 +170,14 @@ def start_auto_sign():
     sign_thread = threading.Thread(target=auto_sign_worker, daemon=True)
     sign_thread.start()
     auto_sign_started = True
-    print("[自动打卡] 后台线程已启动")
 
 
 async def on_message(event, actions, Manager, Segments):
     global auto_sign_started, sign_status
+    
+    # 初始化全局引用
+    if _global_actions is None or _global_Manager is None:
+        init_globals(actions, Manager)
     
     # 启动后台线程
     if not auto_sign_started:
@@ -211,11 +215,10 @@ async def on_message(event, actions, Manager, Segments):
         )
         return True
     
-    # 手动触发打卡（管理员）
+    # 手动触发打卡
     if user_message == f"{reminder}立即打卡":
         user_id = str(event.user_id)
         
-        # 权限检查
         root_users = [str(u) for u in Configurator.cm.get_cfg().others.get("ROOT_User", [])]
         super_users = []
         manage_users = []
@@ -258,11 +261,9 @@ async def on_message(event, actions, Manager, Segments):
             message=Manager.Message(Segments.Text("🔄 开始手动执行全群打卡..."))
         )
         
-        # 重置状态并执行
         sign_status["retry_count"] = 0
         await do_sign_for_all_groups(actions, Manager, retry_only_failed=False)
         
-        # 发送结果
         msg = f"""📊 手动打卡完成
 ————————————————————
 总群数: {sign_status['total']}
@@ -284,8 +285,5 @@ async def on_message(event, actions, Manager, Segments):
     
     return False
 
-
-# 启动后台线程
-start_auto_sign()
 
 print("[群自动打卡插件] 加载成功")
