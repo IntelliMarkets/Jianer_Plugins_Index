@@ -11,7 +11,8 @@ Configurator.cm = Configurator.ConfigManager(
 BOT_NAME = Configurator.cm.get_cfg().others.get("bot_name", "简儿")
 REMINDER = Configurator.cm.get_cfg().others.get("reminder", "#")
 
-TRIGGHT_KEYWORD = "Any"
+# 修改触发关键词为具体的命令
+TRIGGHT_KEYWORD = "踢"
 HELP_MESSAGE = f"""{REMINDER}踢1级 —> 列出群内等级=1的成员
 {REMINDER}踢人白名单 添加 QQ号 —> 添加踢人白名单
 {REMINDER}踢人白名单 移除 QQ号 —> 移除白名单
@@ -81,6 +82,20 @@ async def on_message(event, actions, Manager, Segments):
     if not msg.startswith(REMINDER):
         return False
 
+    # 移除前缀，获取命令部分
+    cmd_content = msg[len(REMINDER):].strip()
+    parts = cmd_content.split()
+    
+    if not parts:
+        return False
+    
+    cmd = parts[0].lower()
+    
+    # 只处理自己的命令，其他命令放行给其他插件
+    if cmd not in ["踢1级", "踢人白名单"]:
+        return False
+
+    # 权限检查
     user_id = str(event.user_id)
     admins = load_admins()
     
@@ -90,15 +105,6 @@ async def on_message(event, actions, Manager, Segments):
             message=Manager.Message(Segments.Text("权限不足，只有管理员可以使用此命令。"))
         )
         return True
-
-    # 移除前缀，获取命令部分
-    cmd_content = msg[len(REMINDER):].strip()
-    parts = cmd_content.split()
-    
-    if not parts:
-        return False
-    
-    cmd = parts[0].lower()
 
     # ---------- 踢1级 ----------
     if cmd == "踢1级":
@@ -202,7 +208,7 @@ async def on_message(event, actions, Manager, Segments):
         return True
 
     # ---------- 踢人白名单 添加 ----------
-    elif cmd == "踢人白名单" and len(parts) >= 3 and parts[1] == "添加":
+    elif len(parts) >= 3 and parts[1] == "添加":
         qq_to_add = parts[2].strip()
         if not qq_to_add.isdigit():
             await actions.send(
@@ -220,7 +226,7 @@ async def on_message(event, actions, Manager, Segments):
         return True
 
     # ---------- 踢人白名单 移除 ----------
-    elif cmd == "踢人白名单" and len(parts) >= 3 and parts[1] == "移除":
+    elif len(parts) >= 3 and parts[1] == "移除":
         qq_to_remove = parts[2].strip()
         whitelist = load_whitelist()
         if qq_to_remove in whitelist:
@@ -238,7 +244,7 @@ async def on_message(event, actions, Manager, Segments):
         return True
 
     # ---------- 踢人白名单 列表 ----------
-    elif cmd == "踢人白名单" and len(parts) >= 2 and parts[1] == "列表":
+    elif len(parts) >= 2 and parts[1] == "列表":
         whitelist = load_whitelist()
         if not whitelist:
             await actions.send(
